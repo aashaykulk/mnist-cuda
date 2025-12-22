@@ -4,20 +4,20 @@ project(mnist_nn LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# nn library
+# --- nn library ---
 add_library(nn STATIC
-    src/nn/network.cpp
+  src/nn_cpu/network.cpp
 )
 target_include_directories(nn PUBLIC src)
 
-# mnist loader library
+# --- mnist loader library ---
 add_library(mnist STATIC
-    src/mnist/mnist_loader.cpp
+  src/mnist/mnist_loader.cpp
 )
 target_include_directories(mnist PUBLIC src)
 
-# CPU executable
-add_executable(mnist_cpu
-    src/main_cpu.cpp
+# --- executable (currently your loader test main) ---
+add_executable(mnist_loader_test
+  src/main.cpp
 )
-target_link_libraries(mnist_cpu PRIVATE nn mnist)
+target_link_libraries(mnist_loader_test PRIVATE mnist)
