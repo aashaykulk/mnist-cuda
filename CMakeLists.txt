@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- nn library ---
 add_library(nn STATIC
-  src/nn_cpu/network.cpp
+  src/neural_network/network.cpp
 )
 target_include_directories(nn PUBLIC src)
 

@@ -20,16 +20,16 @@ class MNIST {
   public:
 
   // getters
-  uint32_t get_num_images() const;
-  uint32_t get_num_labels() const;
-  uint32_t get_num_rows() const;
-  uint32_t get_num_cols() const;
-  const uint8_t *get_images_buffer() const;
-  const uint8_t *get_labels_buffer() const;
+  uint32_t get_num_images() const {return num_images;}
+  uint32_t get_num_labels() const {return num_labels;}
+  uint32_t get_num_rows() const {return num_rows;}
+  uint32_t get_num_cols() const {return num_cols;}
+  const uint8_t *get_images_buffer() const {return images.data();}
+  const uint8_t *get_labels_buffer() const {return labels.data();}
   const uint8_t *image_ptr(size_t i) const;
-  
   // bytes per image
-  size_t image_size() const;
+  size_t image_size() const {return num_rows * num_cols;}
+
   // load image & label file
   bool load(const std::string &image_file, const std::string &label_file);
 

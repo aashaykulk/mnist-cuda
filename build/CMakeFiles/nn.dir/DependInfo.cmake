@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/Users/aashay/Aashay/projects/mnist-cuda/src/nn_cpu/network.cpp" "CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o" "gcc" "CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o.d"
+  "/Users/aashay/Aashay/projects/mnist-cuda/src/neural_network/network.cpp" "CMakeFiles/nn.dir/src/neural_network/network.cpp.o" "gcc" "CMakeFiles/nn.dir/src/neural_network/network.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

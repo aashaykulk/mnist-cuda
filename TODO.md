@@ -1,7 +1,7 @@
 TODO
 
 - [x] Load MNIST Database
-- [ ] Decide Neural Network Architecture
+- [x] Decide Neural Network Architecture
 - [ ] Implement Forward Pass (Softmax)
 - [ ] Implement BackPropagation
 - [ ] Optimization

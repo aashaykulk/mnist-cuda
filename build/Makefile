@@ -203,29 +203,29 @@ src/mnist/mnist_loader.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/mnist.dir/build.make CMakeFiles/mnist.dir/src/mnist/mnist_loader.cpp.s
 .PHONY : src/mnist/mnist_loader.cpp.s
 
-src/nn_cpu/network.o: src/nn_cpu/network.cpp.o
-.PHONY : src/nn_cpu/network.o
+src/neural_network/network.o: src/neural_network/network.cpp.o
+.PHONY : src/neural_network/network.o
 
 # target to build an object file
-src/nn_cpu/network.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/nn.dir/build.make CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o
-.PHONY : src/nn_cpu/network.cpp.o
+src/neural_network/network.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/nn.dir/build.make CMakeFiles/nn.dir/src/neural_network/network.cpp.o
+.PHONY : src/neural_network/network.cpp.o
 
-src/nn_cpu/network.i: src/nn_cpu/network.cpp.i
-.PHONY : src/nn_cpu/network.i
+src/neural_network/network.i: src/neural_network/network.cpp.i
+.PHONY : src/neural_network/network.i
 
 # target to preprocess a source file
-src/nn_cpu/network.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/nn.dir/build.make CMakeFiles/nn.dir/src/nn_cpu/network.cpp.i
-.PHONY : src/nn_cpu/network.cpp.i
+src/neural_network/network.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/nn.dir/build.make CMakeFiles/nn.dir/src/neural_network/network.cpp.i
+.PHONY : src/neural_network/network.cpp.i
 
-src/nn_cpu/network.s: src/nn_cpu/network.cpp.s
-.PHONY : src/nn_cpu/network.s
+src/neural_network/network.s: src/neural_network/network.cpp.s
+.PHONY : src/neural_network/network.s
 
 # target to generate assembly for a file
-src/nn_cpu/network.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/nn.dir/build.make CMakeFiles/nn.dir/src/nn_cpu/network.cpp.s
-.PHONY : src/nn_cpu/network.cpp.s
+src/neural_network/network.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/nn.dir/build.make CMakeFiles/nn.dir/src/neural_network/network.cpp.s
+.PHONY : src/neural_network/network.cpp.s
 
 # Help Target
 help:
@@ -244,9 +244,9 @@ help:
 	@echo "... src/mnist/mnist_loader.o"
 	@echo "... src/mnist/mnist_loader.i"
 	@echo "... src/mnist/mnist_loader.s"
-	@echo "... src/nn_cpu/network.o"
-	@echo "... src/nn_cpu/network.i"
-	@echo "... src/nn_cpu/network.s"
+	@echo "... src/neural_network/network.o"
+	@echo "... src/neural_network/network.i"
+	@echo "... src/neural_network/network.s"
 .PHONY : help
 
 

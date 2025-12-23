@@ -14,8 +14,9 @@ int main() {
     return 1;
   }
 
+    cout << "test load & train load succeeded\n";
 
-  cout << "test load succeeded\n";
+
   return 0;
 }
 

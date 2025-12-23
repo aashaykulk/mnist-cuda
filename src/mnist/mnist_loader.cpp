@@ -2,6 +2,7 @@ using namespace std;
 #include "mnist_loader.hpp"
 #include <fstream>
 #include <iostream>
+#include <cassert>
 
 bool read_u32_be(istream &ifs, uint32_t &u32) {
   unsigned char buf[4];
@@ -10,9 +11,11 @@ bool read_u32_be(istream &ifs, uint32_t &u32) {
   u32 = ((uint32_t)buf[0] << 24) + ((uint32_t)buf[1] << 16) + ((uint32_t)buf[2] << 8) + (uint32_t) buf[3];
   return true;
 }
-
-size_t MNIST::image_size() const {
-  return num_rows * num_cols;
+const uint8_t *MNIST::image_ptr(size_t i) const {
+  assert(i < num_images);
+  
+  const uint8_t *base = images.data();
+  return base +(image_size()*i);
 }
 
 bool MNIST::load(const std::string &image_file, const std::string &label_file) {

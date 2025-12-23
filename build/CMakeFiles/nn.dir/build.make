@@ -72,28 +72,28 @@ include CMakeFiles/nn.dir/flags.make
 CMakeFiles/nn.dir/codegen:
 .PHONY : CMakeFiles/nn.dir/codegen
 
-CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o: CMakeFiles/nn.dir/flags.make
-CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o: /Users/aashay/Aashay/projects/mnist-cuda/src/nn_cpu/network.cpp
-CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o: CMakeFiles/nn.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o -MF CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o.d -o CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o -c /Users/aashay/Aashay/projects/mnist-cuda/src/nn_cpu/network.cpp
+CMakeFiles/nn.dir/src/neural_network/network.cpp.o: CMakeFiles/nn.dir/flags.make
+CMakeFiles/nn.dir/src/neural_network/network.cpp.o: /Users/aashay/Aashay/projects/mnist-cuda/src/neural_network/network.cpp
+CMakeFiles/nn.dir/src/neural_network/network.cpp.o: CMakeFiles/nn.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/nn.dir/src/neural_network/network.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nn.dir/src/neural_network/network.cpp.o -MF CMakeFiles/nn.dir/src/neural_network/network.cpp.o.d -o CMakeFiles/nn.dir/src/neural_network/network.cpp.o -c /Users/aashay/Aashay/projects/mnist-cuda/src/neural_network/network.cpp
 
-CMakeFiles/nn.dir/src/nn_cpu/network.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nn.dir/src/nn_cpu/network.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/aashay/Aashay/projects/mnist-cuda/src/nn_cpu/network.cpp > CMakeFiles/nn.dir/src/nn_cpu/network.cpp.i
+CMakeFiles/nn.dir/src/neural_network/network.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nn.dir/src/neural_network/network.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/aashay/Aashay/projects/mnist-cuda/src/neural_network/network.cpp > CMakeFiles/nn.dir/src/neural_network/network.cpp.i
 
-CMakeFiles/nn.dir/src/nn_cpu/network.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nn.dir/src/nn_cpu/network.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/aashay/Aashay/projects/mnist-cuda/src/nn_cpu/network.cpp -o CMakeFiles/nn.dir/src/nn_cpu/network.cpp.s
+CMakeFiles/nn.dir/src/neural_network/network.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nn.dir/src/neural_network/network.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/aashay/Aashay/projects/mnist-cuda/src/neural_network/network.cpp -o CMakeFiles/nn.dir/src/neural_network/network.cpp.s
 
 # Object files for target nn
 nn_OBJECTS = \
-"CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o"
+"CMakeFiles/nn.dir/src/neural_network/network.cpp.o"
 
 # External object files for target nn
 nn_EXTERNAL_OBJECTS =
 
-libnn.a: CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o
+libnn.a: CMakeFiles/nn.dir/src/neural_network/network.cpp.o
 libnn.a: CMakeFiles/nn.dir/build.make
 libnn.a: CMakeFiles/nn.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libnn.a"

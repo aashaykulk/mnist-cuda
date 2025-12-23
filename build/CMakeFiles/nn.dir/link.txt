@@ -1,2 +1,2 @@
-/usr/bin/ar qc libnn.a CMakeFiles/nn.dir/src/nn_cpu/network.cpp.o
+/usr/bin/ar qc libnn.a CMakeFiles/nn.dir/src/neural_network/network.cpp.o
 /usr/bin/ranlib libnn.a
