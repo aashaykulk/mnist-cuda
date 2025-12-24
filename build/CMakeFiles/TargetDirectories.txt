@@ -1,5 +1,0 @@
-/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/nn.dir
-/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/mnist.dir
-/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/mnist_loader_test.dir
-/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/edit_cache.dir
-/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/rebuild_cache.dir
