@@ -83,21 +83,29 @@ void add_bias(vector<float> &z, const vector<float> &b, int m, int n ) {
 }
 
 // computes probabilities given logits
-void compute_probs(const vector<float> &logits, vector<float> &probs) {
+void Network::compute_probs(const vector<float> &logits, vector<float> &probs) {
 
   // compute max logit
-  vector<float>::iterator it = max_element(logits.begin(), logits.end());
-  float max_logit = *it;
+  for (int i = 0; i < current_B; i++) {
+    float max_i = logits[i*out_dim];
+    for (int j = 0; j < out_dim; j++) {
+      if (max_i < logits[i*out_dim+ j]) max_i = logits[i*out_dim + j];
 
-  // compute sum_exp
-  float sum_exp = 0.0f;
-  for (int j = 0; j < logits.size(); j++) {
-    sum_exp += exp(logits[j] - max_logit);
-  }
+    }
 
-  // compute probs
-  for (int j = 0; j < logits.size(); j++) {
-    probabilities[j] = (exp(logits[j] - max_logit) / sum_exp);
+    // compute sum_exp
+    float sum_exp = 0.0f;
+    vector<float> exps(out_dim, 0.0f);
+    for (int j = 0; j < out_dim; j++) {
+      exps[j] = exp(logits[i*out_dim + j] - max_i);
+      sum_exp += exps[j];
+    }
+   
+
+    // compute probs
+    for (int j = 0; j < out_dim; j++) {
+      probs[i*out_dim + j] = (exps[j] / sum_exp);
+    }
   }
 
 }

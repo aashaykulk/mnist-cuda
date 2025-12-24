@@ -21,6 +21,8 @@ class Network {
   static constexpr int h2 = 128;
   static constexpr int out_dim = 10;
 
+  int current_B = 0;
+
   // weights tensors
   std::vector<float> W1 = std::vector<float>(in_dim*h1);
   std::vector<float> W2 = std::vector<float>(h1*h2);
@@ -54,7 +56,6 @@ class Network {
   std::vector<float> dZ1;
   std::vector<float> dZ2;
 
-  int current_B = 0;
  
   // zeroes the gradients after every iteration
   void zero_grads() {
