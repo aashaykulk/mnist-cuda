@@ -94,7 +94,7 @@ class Network {
     current_B = B;
   }
 
-  void compute_probs(const vector<float> &logits, vector<float> &probs);
+  void compute_probs(const std::vector<float> &logits, std::vector<float> &probs);
 
   public:
 
@@ -108,5 +108,9 @@ class Network {
   void forward(const std::vector<float> &X, int B);
   float backward(const std::vector<float> &X, const std::vector<uint8_t> &y, int B);
   void step(float lr); 
+
+  // training functions
+  void save(const std::string &binary);
+  void load(const std::string &binary);
 
 };

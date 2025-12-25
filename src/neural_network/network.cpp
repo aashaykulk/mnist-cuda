@@ -13,6 +13,8 @@
 #include <iostream>
 #include <exception>
 #include <stdexcept>
+#include <fstream>
+#include <cstdint>
 using namespace std;
 
 
@@ -80,6 +82,79 @@ void add_bias(vector<float> &z, const vector<float> &b, int m, int n ) {
       z[i*n + j] += b[j];
     }
   } 
+}
+
+void Network::save(const std::string &binary) {
+  std::ofstream ofs(binary, std::ios::binary);
+  if (!ofs) {
+    throw std::runtime_error("failed to open model file for writing");
+  }
+
+  // --- header ---
+  uint32_t magic = 0x4D4E5354; // "MNST"
+  uint32_t version = 1;
+
+  ofs.write(reinterpret_cast<char*>(&magic), sizeof(magic));
+  ofs.write(reinterpret_cast<char*>(&version), sizeof(version));
+
+  // dimensions (sanity)
+  uint32_t dims[4] = {in_dim, h1, h2, out_dim};
+  ofs.write(reinterpret_cast<char*>(dims), sizeof(dims));
+
+  // --- parameters ---
+  ofs.write(reinterpret_cast<const char*>(W1.data()), W1.size() * sizeof(float));
+  ofs.write(reinterpret_cast<const char*>(W2.data()), W2.size() * sizeof(float));
+  ofs.write(reinterpret_cast<const char*>(W3.data()), W3.size() * sizeof(float));
+
+  ofs.write(reinterpret_cast<const char*>(b1.data()), b1.size() * sizeof(float));
+  ofs.write(reinterpret_cast<const char*>(b2.data()), b2.size() * sizeof(float));
+  ofs.write(reinterpret_cast<const char*>(b3.data()), b3.size() * sizeof(float));
+
+  if (!ofs) {
+    throw std::runtime_error("error while writing model file");
+  }
+}
+
+void Network::load(const std::string &binary) {
+  std::ifstream ifs(binary, std::ios::binary);
+  if (!ifs) {
+    throw std::runtime_error("failed to open model file for reading");
+  }
+
+  // --- header ---
+  uint32_t magic = 0;
+  uint32_t version = 0;
+
+  ifs.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+  ifs.read(reinterpret_cast<char*>(&version), sizeof(version));
+
+  if (magic != 0x4D4E5354) {
+    throw std::runtime_error("invalid model file (bad magic)");
+  }
+  if (version != 1) {
+    throw std::runtime_error("unsupported model version");
+  }
+
+  uint32_t dims[4];
+  ifs.read(reinterpret_cast<char*>(dims), sizeof(dims));
+
+  if (dims[0] != in_dim || dims[1] != h1 ||
+      dims[2] != h2 || dims[3] != out_dim) {
+    throw std::runtime_error("model dimensions mismatch");
+  }
+
+  // --- parameters ---
+  ifs.read(reinterpret_cast<char*>(W1.data()), W1.size() * sizeof(float));
+  ifs.read(reinterpret_cast<char*>(W2.data()), W2.size() * sizeof(float));
+  ifs.read(reinterpret_cast<char*>(W3.data()), W3.size() * sizeof(float));
+
+  ifs.read(reinterpret_cast<char*>(b1.data()), b1.size() * sizeof(float));
+  ifs.read(reinterpret_cast<char*>(b2.data()), b2.size() * sizeof(float));
+  ifs.read(reinterpret_cast<char*>(b3.data()), b3.size() * sizeof(float));
+
+  if (!ifs) {
+    throw std::runtime_error("error while reading model file");
+  }
 }
 
 // computes probabilities given logits

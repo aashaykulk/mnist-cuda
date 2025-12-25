@@ -16,8 +16,14 @@ add_library(mnist STATIC
 )
 target_include_directories(mnist PUBLIC src)
 
-# --- executable (currently your loader test main) ---
-add_executable(mnist_loader_test
-  src/main.cpp
+# --- executable: training ---
+add_executable(train
+  src/train.cpp
 )
-target_link_libraries(mnist_loader_test PRIVATE mnist)
+
+# --- executable: testing ---
+add_executable(test
+  src/test.cpp
+)
+target_link_libraries(train PRIVATE nn mnist)
+target_link_libraries(test PRIVATE nn mnist)
