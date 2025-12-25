@@ -176,11 +176,32 @@ float Network::backward(const vector<float> &X, const vector<uint8_t> &y, int B)
 
   }
   // mean out the loss
-  loss /= B;
+  loss /= current_B;
   return loss;
 
 }
 
 void Network::step(float lr) {
+  
+  // update weights
+  for (int t = 0; t < W1.size(); t++) {
+    W1[t] -= lr * (dW1[t] / current_B);
+  }
+  for (int t = 0; t < W2.size(); t++) {
+    W2[t] -= lr * (dW2[t] / current_B);
+  }
+  for (int t = 0; t < W3.size(); t++) {
+    W3[t] -= lr * (dW3[t] / current_B);
+  }
 
+  // update biases
+  for (int t = 0; t < b1.size(); t++) {
+    b1[t] -= lr * (db1[t] / current_B);
+  }
+  for (int t = 0; t < b2.size(); t++) {
+    b2[t] -= lr * (db2[t] / current_B);
+  }
+  for (int t = 0; t < b3.size(); t++) {
+    b3[t] -= lr * (db3[t] / current_B);
+  }
 }
