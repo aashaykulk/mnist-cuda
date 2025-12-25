@@ -131,7 +131,53 @@ void Network::forward(const vector<float> &X, int B) {
 }
 
 float Network::backward(const vector<float> &X, const vector<uint8_t> &y, int B) {
+  ensure_batch(B);
   compute_probs(logits, probs);
+
+  // loss 
+  float loss = 0.0f;
+
+  //zero gradients before accumulation 
+  zero_grads();
+
+  for(int i = 0; i < current_B; i++) {
+
+    loss += -log(probs[i*out_dim + y[i]]);
+    
+    // layer 3 backprop
+    for (int j = 0; j < out_dim; j++) {
+      dlogits[i*out_dim + j] = probs[i*out_dim + j] - 1*(j == y[i]);
+      db3[j] += dlogits[i*out_dim + j];
+
+      for (int k = 0; k < h2; k++) {
+        dW3[k*out_dim + j] += a2[i*h2 + k]*dlogits[i*out_dim + j]; 
+        dZ2[i*h2 + k] += W3[k*out_dim + j]*dlogits[i*out_dim + j]*(z2[i*h2 + k] > 0);
+      }
+    }
+
+    // layer 2 backprop
+    for (int k = 0; k < h2; k++) {
+      db2[k] += dZ2[i*h2 + k];
+
+      for (int p = 0; p < h1; p++) {
+        dW2[p*h2 + k] += a1[i*h1 + p]*dZ2[i*h2 + k];
+        dZ1[i*h1 + p] += W2[p*h2 + k]*dZ2[i*h2 + k]*(z1[i*h1 + p] > 0);
+      }
+    }
+
+    // layer 1 backprop
+    for (int p = 0; p < h1; p++) {
+      db1[p] += dZ1[i*h1 + p];
+
+      for (int q = 0; q < in_dim; q++) {
+        dW1[q*h1 + p] += X[i*in_dim + q]*dZ1[i*h1 + p];
+      }
+    }
+
+  }
+  // mean out the loss
+  loss /= B;
+  return loss;
 
 }
 

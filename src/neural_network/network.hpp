@@ -67,6 +67,11 @@ class Network {
     fill(db1.begin(), db1.end(), 0.0f);
     fill(db2.begin(), db2.end(), 0.0f);
     fill(db3.begin(), db3.end(), 0.0f);
+
+    fill(dZ1.begin(), dZ1.end(), 0.0f);
+    fill(dZ2.begin(), dZ2.end(), 0.0f);
+
+    fill(dlogits.begin(), dlogits.end(), 0.0f);
   }
 
   //batch resize
@@ -88,6 +93,8 @@ class Network {
     dZ2.resize(B*h2);
     current_B = B;
   }
+
+  void compute_probs(const vector<float> &logits, vector<float> &probs);
 
   public:
 
