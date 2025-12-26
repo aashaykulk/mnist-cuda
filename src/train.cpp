@@ -67,7 +67,7 @@ int main() {
   int B = 128;
   int N = train.get_num_images();
   int num_batches = N / B;
-  int epochs = 3;
+  int epochs = 7;
   float lr = 0.1f;
 
   size_t image_size = train.image_size();
