@@ -13,7 +13,17 @@
 #include <cstdint>
 #include <algorithm>
 
+struct GpuContext;
+  
+
+enum class Backend { CPU, GPU };
+
 class Network {
+
+  // device architecture: CPU or GPU
+  Backend backend_ = Backend::CPU;
+  GpuContext *gpu_ = nullptr;
+  bool cuda_available_ = false;
 
   // class constants
   static constexpr int in_dim = 784;
@@ -112,5 +122,8 @@ class Network {
   // training functions
   void save(const std::string &binary);
   void load(const std::string &binary);
+
+  //device selection
+  void set_backend(Backend backend);
 
 };

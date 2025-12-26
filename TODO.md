@@ -8,10 +8,10 @@ CPU:
 - [x] Implement Step 
 - [x] Implement Neural Network
 - [x] Model Training
-- [ ] Further Optimization (?)
+- [x] Further Optimization (?)
 
 GPU:
-- [ ] Write Kernels
 - [ ] Write Ops
+- [ ] Write Kernels
 - [ ] Write Host functions
 
