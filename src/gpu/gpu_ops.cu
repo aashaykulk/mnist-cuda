@@ -20,6 +20,8 @@ struct GpuContext {
   float *d_X, *d_z1, *d_a1, *d_z2, *d_a2, *d_logits;
   uint8_t *d_y;
 
+  float *d_dlogits, *d_dW1, *d_dW2, *d_dW3, *d_db1, *d_db2, *d_db3;
+
   cublasHandle_t handle;
   bool handle_created;
   bool params_uploaded;
@@ -43,6 +45,7 @@ struct GpuContext {
     d_a2 = nullptr;
     d_logits = nullptr;
     d_y = nullptr;
+    d_dlogits = nullptr;
 
     handle = NULL;
     handle_created = false;
@@ -71,6 +74,8 @@ void gpu_destroy(GpuContext *ctx) {
   if (ctx->d_z2) {cudaFree(ctx->d_z2); ctx->d_z2 = nullptr;}
   if (ctx->d_a2) {cudaFree(ctx->d_a2); ctx->d_a2 = nullptr;}
   if (ctx->d_logits) {cudaFree(ctx->d_logits); ctx->d_logits = nullptr;}
+  if (ctx->d_y) {cudaFree(ctx->d_y); ctx->d_y = nullptr;}
+  if (ctx->d_dlogits) {cudaFree(ctx->d_dlogits); ctx->d_dlogits = nullptr;}
 
   if (ctx->handle_created) cublasDestroy(ctx->handle);
   ctx -> maxB = 0;
@@ -216,7 +221,23 @@ void gpu_download_logits(GpuContext *ctx, float *logits_host, int B) {
 
 }
 
-void gpu_compute_dlogits(GpuContext *ctx, int B) {
+void gpu_compute_d_dlogits(GpuContext *ctx, int B) {
+  // safety check
+  if (ctx == nullptr) return;
+  if (B > ctx->maxB) {std::cout << "Batch Size too large for GPU" << std::endl; return;}
+  if (!ctx->params_uploaded) {std::cout << " Params Not Yet Uploaded" << std::endl; return;}
+  if(!ctx->labels_uploaded) {std::cout << "Labels Not Yet Uploaded" << std::endl; return;}
+
+  cudaError_t err;
+  int blockSize = 256;
+  int numBlocks = (B*out_dim + blockSize - 1)/blockSize;
+  compute_d_dlogits<<<numBlocks, blockSize>>>(ctx -> d_dlogits, ctx->d_logits, ctx->d_y, int B, int out_dim);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel compute_d_dlogits failed: " << cudaGetErrorString(err) << std::endl; return;}
+  err = cudaDeviceSynchronize();
+  if (err != cudaSuccess) {std::cerr << "cuda device Sync failed: " << cudaGetErrorString(err) << std::endl; return;}
+
+
 
 }
 
@@ -231,6 +252,8 @@ void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
   if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return;}
   ctx->labels_uploaded = true;
 
-  gpu_compute_dlogits(ctx, B);
+  gpu_compute_d_dlogits(ctx, B);
+
+
 
 }
