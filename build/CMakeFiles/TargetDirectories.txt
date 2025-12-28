@@ -1,0 +1,6 @@
+/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/nn.dir
+/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/mnist.dir
+/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/train.dir
+/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/test.dir
+/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/edit_cache.dir
+/Users/aashay/Aashay/projects/mnist-cuda/build/CMakeFiles/rebuild_cache.dir

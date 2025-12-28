@@ -18,10 +18,12 @@ struct GpuContext {
 
   //device buffers for forward activations
   float *d_X, *d_z1, *d_a1, *d_z2, *d_a2, *d_logits;
+  uint8_t *d_y;
 
   cublasHandle_t handle;
   bool handle_created;
   bool params_uploaded;
+  bool labels_uploaded;
   int maxB;
   
 
@@ -40,10 +42,12 @@ struct GpuContext {
     d_z2= nullptr;
     d_a2 = nullptr;
     d_logits = nullptr;
+    d_y = nullptr;
 
     handle = NULL;
     handle_created = false;
     params_uploaded = false;
+    labels_uploaded = false;
 
     maxB = 0;
   }
@@ -69,7 +73,7 @@ void gpu_destroy(GpuContext *ctx) {
   if (ctx->d_logits) {cudaFree(ctx->d_logits); ctx->d_logits = nullptr;}
 
   if (ctx->handle_created) cublasDestroy(ctx->handle);
-  maxB = 0;
+  ctx -> maxB = 0;
 
   delete ctx;
 
@@ -112,6 +116,8 @@ GpuContext *gpu_create(int maxB) {
   err = cudaMalloc(&ctx->d_a2, maxB*h2*sizeof(float));
   if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
   err = cudaMalloc(&ctx->d_logits, maxB*out_dim*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_y, maxB*sizeof(uint8_t));
   if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
 
   return ctx;
@@ -194,4 +200,37 @@ void gpu_forward(GpuContext *ctx, const float *X_host, int B) {
   if (err != cudaSuccess) {std::cerr << "cuda kernel biasAdd failed: " << cudaGetErrorString(err) << std::endl; return;}
   err = cudaDeviceSynchronize();
   if (err != cudaSuccess) {std::cerr << "cuda device Sync failed: " << cudaGetErrorString(err) << std::endl; return;}
+}
+
+
+void gpu_download_logits(GpuContext *ctx, float *logits_host, int B) {
+  // safety check
+  if (ctx == nullptr) return;
+  if (B > ctx->maxB) {std::cout << "Batch Size too large for GPU" << std::endl; return;}
+  if (logits_host == nullptr) return;
+  if (!ctx->params_uploaded) {std::cout << " Params Not Yet Uploaded" << std::endl; return;}
+
+  cudaError_t err;
+  err = cudaMemcpy(logits_host, ctx->d_logits, B*out_dim*sizeof(float), cudaMemcpyDevicetoHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return;}
+
+}
+
+void gpu_compute_dlogits(GpuContext *ctx, int B) {
+
+}
+
+void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
+  // safety check
+  if (ctx == nullptr) return;
+  if (B > ctx->maxB) {std::cout << "Batch Size too large for GPU" << std::endl; return;}
+  if (!ctx->params_uploaded) {std::cout << " Params Not Yet Uploaded" << std::endl; return;}
+
+  cudaError_t err;
+  err = cudaMemcpy(ctx->d_y, y_host, B*sizeof(uint8_t), cudaMemcpyHostToDevice);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return;}
+  ctx->labels_uploaded = true;
+
+  gpu_compute_dlogits(ctx, B);
+
 }
