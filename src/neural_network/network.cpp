@@ -7,7 +7,6 @@
  * Layer 3: [128, 10]  + bias → logits
  * Loss:    Softmax + Cross-Entropy
  */
-#include "network.hpp"
 #include <random>
 #include <cmath>
 #include <iostream>
@@ -15,8 +14,11 @@
 #include <stdexcept>
 #include <fstream>
 #include <cstdint>
+#include "network.hpp"
+#include "../gpu/gpu_ops.h"
 using namespace std;
 
+static constexpr int max_B = 256;
 
 // Using normal distribution to generate random weights to W1, W2, W3. biases are already 0.
 Network::Network() {
@@ -46,8 +48,13 @@ Network::Network() {
   }
 
   zero_grads();
-
 }
+
+
+Network::~Network() {
+  if (gpu_) gpu_destroy(gpu_);
+}
+
 
 // A = m * k, B = k * n, C = A x B = m * n
 void matmul(const vector<float> &A, const vector<float> &B,vector<float> &C, int m, int k, int n) {
@@ -188,67 +195,86 @@ void Network::forward(const vector<float> &X, int B) {
   // make sure batch size is correct
   ensure_batch(B);
 
-  // layer 1 
-  matmul(X, W1, z1, B, in_dim, h1);
-  add_bias(z1, b1, B, h1);
-  reLU(z1, a1);
-  
-  // layer 2 
-  matmul(a1, W2, z2, B, h1, h2);
-  add_bias(z2, b2, B, h2);
-  reLU(z2, a2);
-  
-  // layer 3 
-  matmul(a2, W3, logits, B, h2, out_dim);
-  add_bias(logits, b3, B, out_dim);
+  if (this -> backend_ == Backend::GPU) {
 
+    if (!this->gpu_) {
+      throw std::runtime_error("ERROR: No GPU Context found in network forward.");
+    }
+
+    gpu_forward(this->gpu_, X.data(), B);
+    gpu_download_logits(this -> gpu_, this -> logits.data(), B);
+
+  } else {
+    // layer 1 
+    matmul(X, W1, z1, B, in_dim, h1);
+    add_bias(z1, b1, B, h1);
+    reLU(z1, a1);
+    
+    // layer 2 
+    matmul(a1, W2, z2, B, h1, h2);
+    add_bias(z2, b2, B, h2);
+    reLU(z2, a2);
+    
+    // layer 3 
+    matmul(a2, W3, logits, B, h2, out_dim);
+    add_bias(logits, b3, B, out_dim);
+
+  }
   
 }
 
 float Network::backward(const vector<float> &X, const vector<uint8_t> &y, int B) {
   ensure_batch(B);
   compute_probs(logits, probs);
-
   // loss 
   float loss = 0.0f;
 
-  //zero gradients before accumulation 
-  zero_grads();
 
   for(int i = 0; i < current_B; i++) {
-
     loss += -log(probs[i*out_dim + y[i]]);
-    
-    // layer 3 backprop
-    for (int j = 0; j < out_dim; j++) {
-      dlogits[i*out_dim + j] = probs[i*out_dim + j] - 1*(j == y[i]);
-      db3[j] += dlogits[i*out_dim + j];
+  }
+  if (this -> backend_ == Backend::GPU) {
+    if (!this->gpu_) {
+      throw std::runtime_error("ERROR: No GPU Context found in network backward.");
+    }
+    gpu_backward(this->gpu_, y.data(), B);
 
+  } else {
+    //zero gradients before accumulation 
+    zero_grads();
+
+    for(int i = 0; i < current_B; i++) {
+      // layer 3 backprop
+      for (int j = 0; j < out_dim; j++) {
+        dlogits[i*out_dim + j] = probs[i*out_dim + j] - 1*(j == y[i]);
+        db3[j] += dlogits[i*out_dim + j];
+
+        for (int k = 0; k < h2; k++) {
+          dW3[k*out_dim + j] += a2[i*h2 + k]*dlogits[i*out_dim + j]; 
+          dZ2[i*h2 + k] += W3[k*out_dim + j]*dlogits[i*out_dim + j]*(z2[i*h2 + k] > 0);
+        }
+      }
+
+      // layer 2 backprop
       for (int k = 0; k < h2; k++) {
-        dW3[k*out_dim + j] += a2[i*h2 + k]*dlogits[i*out_dim + j]; 
-        dZ2[i*h2 + k] += W3[k*out_dim + j]*dlogits[i*out_dim + j]*(z2[i*h2 + k] > 0);
+        db2[k] += dZ2[i*h2 + k];
+
+        for (int p = 0; p < h1; p++) {
+          dW2[p*h2 + k] += a1[i*h1 + p]*dZ2[i*h2 + k];
+          dZ1[i*h1 + p] += W2[p*h2 + k]*dZ2[i*h2 + k]*(z1[i*h1 + p] > 0);
+        }
       }
-    }
 
-    // layer 2 backprop
-    for (int k = 0; k < h2; k++) {
-      db2[k] += dZ2[i*h2 + k];
-
+      // layer 1 backprop
       for (int p = 0; p < h1; p++) {
-        dW2[p*h2 + k] += a1[i*h1 + p]*dZ2[i*h2 + k];
-        dZ1[i*h1 + p] += W2[p*h2 + k]*dZ2[i*h2 + k]*(z1[i*h1 + p] > 0);
+        db1[p] += dZ1[i*h1 + p];
+
+        for (int q = 0; q < in_dim; q++) {
+          dW1[q*h1 + p] += X[i*in_dim + q]*dZ1[i*h1 + p];
+        }
       }
+
     }
-
-    // layer 1 backprop
-    for (int p = 0; p < h1; p++) {
-      db1[p] += dZ1[i*h1 + p];
-
-      for (int q = 0; q < in_dim; q++) {
-        dW1[q*h1 + p] += X[i*in_dim + q]*dZ1[i*h1 + p];
-      }
-    }
-
   }
   // mean out the loss
   loss /= current_B;
@@ -258,25 +284,48 @@ float Network::backward(const vector<float> &X, const vector<uint8_t> &y, int B)
 
 void Network::step(float lr) {
   
-  // update weights
-  for (int t = 0; t < W1.size(); t++) {
-    W1[t] -= lr * (dW1[t] / current_B);
-  }
-  for (int t = 0; t < W2.size(); t++) {
-    W2[t] -= lr * (dW2[t] / current_B);
-  }
-  for (int t = 0; t < W3.size(); t++) {
-    W3[t] -= lr * (dW3[t] / current_B);
-  }
+  if (this -> backend_ == Backend::GPU) {
+    if (!this->gpu_) {
+      throw std::runtime_error("ERROR: No GPU Context found in network step.");
+    }
+    gpu_step(this->gpu_, lr, this->current_B);
+  } else {
+    // update weights
+    for (int t = 0; t < W1.size(); t++) {
+      W1[t] -= lr * (dW1[t] / current_B);
+    }
+    for (int t = 0; t < W2.size(); t++) {
+      W2[t] -= lr * (dW2[t] / current_B);
+    }
+    for (int t = 0; t < W3.size(); t++) {
+      W3[t] -= lr * (dW3[t] / current_B);
+    }
 
-  // update biases
-  for (int t = 0; t < b1.size(); t++) {
-    b1[t] -= lr * (db1[t] / current_B);
+    // update biases
+    for (int t = 0; t < b1.size(); t++) {
+      b1[t] -= lr * (db1[t] / current_B);
+    }
+    for (int t = 0; t < b2.size(); t++) {
+      b2[t] -= lr * (db2[t] / current_B);
+    }
+    for (int t = 0; t < b3.size(); t++) {
+      b3[t] -= lr * (db3[t] / current_B);
+    }
   }
-  for (int t = 0; t < b2.size(); t++) {
-    b2[t] -= lr * (db2[t] / current_B);
+}
+
+void Network::set_backend(Backend backend) {
+  if (backend == Backend::GPU) {
+    if (this -> gpu_) return;
+    this -> gpu_ = gpu_create(max_B);
+    if (!gpu_upload_params(this -> gpu_, this -> W1.data(), this -> W2.data(), this -> W3.data(), this -> b1.data(), this -> b2.data(), this -> b3.data())) {
+      throw std::runtime_error("error while uploading params to gpu");
+    }
+    this -> backend_ = backend;
   }
-  for (int t = 0; t < b3.size(); t++) {
-    b3[t] -= lr * (db3[t] / current_B);
+  if (backend == Backend::CPU) {
+    if(this -> gpu_) gpu_destroy(this -> gpu_);
+    this -> gpu_ = nullptr;
+    this -> backend_ = backend;
   }
 }

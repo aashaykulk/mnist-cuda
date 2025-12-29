@@ -110,6 +110,9 @@ class Network {
 
   //constructor
   Network();
+  
+  //destructor
+  ~Network();
 
   //getters
   const std::vector<float>& get_logits() const {return logits;}

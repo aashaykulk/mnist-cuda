@@ -345,3 +345,50 @@ void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
   if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}
   err = cudaDeviceSynchronize();
 }
+
+
+void gpu_step(GpuContext *ctx, const float lr, int B) {
+  // safety check
+  if (ctx == nullptr) return;
+  if (B > ctx->maxB) {std::cout << "Batch Size too large for GPU" << std::endl; return;}
+  if (B <= 0) {std::cout << "Batch Size too small for GPU" << std::endl; return;}
+  if (!ctx->params_uploaded) {std::cout << " Params Not Yet Uploaded" << std::endl; return;}
+  if (!ctx->labels_uploaded) {std::cout << " Labels Not Yet Uploaded" << std::endl; return;}
+  cudaError_t err;
+  float averaged_lr = lr / B;
+
+  int blockSize = 256;
+  int m = in_dim;
+  int n = h1;
+  int numBlocks = (m*n + blockSize - 1)/blockSize;
+  int numBlocks_b = (n + blockSize - 1)/blockSize;
+  update_d_W<<<numBlocks, blockSize>>>(ctx->d_W1, ctx->d_dW1, averaged_lr, m, n);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel update_d_W failed: " << cudaGetErrorString(err) << std::endl; return;}
+  update_d_b<<<numBlocks_b, blockSize>>>(ctx->d_b1, ctx->d_db1, averaged_lr, n);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel update_d_b failed: " << cudaGetErrorString(err) << std::endl; return;}
+
+  m = h1;
+  n = h2;
+  numBlocks = (m*n + blockSize - 1)/blockSize;
+  numBlocks_b = (n + blockSize - 1)/blockSize;
+  update_d_W<<<numBlocks, blockSize>>>(ctx->d_W2, ctx->d_dW2, averaged_lr, m, n);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel update_d_W failed: " << cudaGetErrorString(err) << std::endl; return;}
+  update_d_b<<<numBlocks_b, blockSize>>>(ctx->d_b2, ctx->d_db2, averaged_lr, n);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel update_d_b failed: " << cudaGetErrorString(err) << std::endl; return;}
+
+  m = h2;
+  n = out_dim;
+  numBlocks = (m*n + blockSize - 1)/blockSize;
+  numBlocks_b = (n + blockSize - 1)/blockSize;
+  update_d_W<<<numBlocks, blockSize>>>(ctx->d_W3, ctx->d_dW3, averaged_lr, m, n);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel update_d_W failed: " << cudaGetErrorString(err) << std::endl; return;}
+  update_d_b<<<numBlocks_b, blockSize>>>(ctx->d_b3, ctx->d_db3, averaged_lr, n);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel update_d_b failed: " << cudaGetErrorString(err) << std::endl; return;}
+
+}

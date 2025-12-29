@@ -73,3 +73,16 @@ __global__ void ReLU_derivative(float *d_dz, float *d_da, float *d_a, int m, int
 
   d_dz[t] =d_da[t]*(d_a[t] > 0);
 }
+
+__global__ void update_d_W(float *d_W, float *d_dW, float averaged_lr, int m, int n) {
+  int t = blockIdx.x * blockDim.x + threadIdx.x;
+  int total = m*n;
+  if (t >= total) return;
+
+  d_W[t] -= averaged_lr*d_dW[t];
+}
+__global__ void update_d_b(float *d_b, float *d_db, float averaged_lr,  int n) {
+  int t = blockIdx.x * blockDim.x + threadIdx.x;
+  if (t >= n) return;
+  d_b[t] -= averaged_lr*d_db[t];
+}
