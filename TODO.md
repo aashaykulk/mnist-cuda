@@ -11,7 +11,12 @@ CPU:
 - [x] Further Optimization (?)
 
 GPU:
-- [ ] Write Ops
-- [ ] Write Kernels
-- [ ] Write Host functions
+- [x] Write Ops
+- [x] Write Kernels
+- [x] Write Host functions
+
+Train:
+- [ ] GPU Train
+- [ ] Cloud GPU
+- [ ] Results
 

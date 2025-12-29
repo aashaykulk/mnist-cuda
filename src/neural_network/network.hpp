@@ -123,6 +123,7 @@ class Network {
   void step(float lr); 
 
   // training functions
+  void sync_from_gpu();
   void save(const std::string &binary);
   void load(const std::string &binary);
 

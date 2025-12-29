@@ -197,6 +197,29 @@ bool gpu_upload_params(GpuContext *ctx, const float *W1, const float *W2, const 
 
   return true;
 }
+bool gpu_download_params(GpuContext *ctx, float *W1, float *W2, float *W3, float *b1, float *b2, float *b3) {
+  if (ctx == nullptr) return false;
+  if (!ctx->params_uploaded) { std::cerr << "Params Not Uploaded: " << std::endl; return false;}
+  cudaError_t err;
+  err = cudaDeviceSynchronize();
+  if (err != cudaSuccess) {std::cerr << "cuda device Sync failed: " << cudaGetErrorString(err) << std::endl; return false;}
+
+  err = cudaMemcpy(W1, ctx->d_W1, in_dim*h1*sizeof(float), cudaMemcpyDeviceToHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return false;}
+  err = cudaMemcpy(W2, ctx->d_W2, h1*h2*sizeof(float), cudaMemcpyDeviceToHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return false;}
+  err = cudaMemcpy(W3, ctx->d_W3, h2*out_dim*sizeof(float), cudaMemcpyDeviceToHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return false;}
+
+  err = cudaMemcpy(b1, ctx->d_b1, h1*sizeof(float), cudaMemcpyDeviceToHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return false;}
+  err = cudaMemcpy(b2, ctx->d_b2, h2*sizeof(float), cudaMemcpyDeviceToHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return false;}
+  err = cudaMemcpy(b3, ctx->d_b3, out_dim*sizeof(float), cudaMemcpyDeviceToHost);
+  if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return false;}
+
+  return true;
+}
 
 void gpu_forward(GpuContext *ctx, const float *X_host, int B) {
   
@@ -261,7 +284,7 @@ void gpu_download_logits(GpuContext *ctx, float *logits_host, int B) {
   if (!ctx->params_uploaded) {std::cout << " Params Not Yet Uploaded" << std::endl; return;}
 
   cudaError_t err;
-  err = cudaMemcpy(logits_host, ctx->d_logits, B*out_dim*sizeof(float), cudaMemcpyDevicetoHost);
+  err = cudaMemcpy(logits_host, ctx->d_logits, B*out_dim*sizeof(float), cudaMemcpyDeviceToHost);
   if (err != cudaSuccess) {std::cerr << "cudaMemcpy failed: " << cudaGetErrorString(err) << std::endl; return;}
 
 }

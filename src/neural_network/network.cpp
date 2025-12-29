@@ -91,6 +91,17 @@ void add_bias(vector<float> &z, const vector<float> &b, int m, int n ) {
   } 
 }
 
+void Network::sync_from_gpu() {
+  if (this -> backend_ == Backend::CPU) return;
+  if (!this->gpu_) {
+    throw std::runtime_error("Failed to sync_from_gpu");
+  }
+  if (!gpu_download_params(gpu_, W1.data(), W2.data(), W3.data(), b1.data(), b2.data(), b3.data())) {
+    throw std::runtime_error("Failed to download parameters from GPU");
+  }
+
+}
+
 void Network::save(const std::string &binary) {
   std::ofstream ofs(binary, std::ios::binary);
   if (!ofs) {

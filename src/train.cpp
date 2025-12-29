@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include "mnist/mnist_loader.hpp"
 #include "neural_network/network.hpp"
 #include <vector>
@@ -54,7 +55,7 @@ static float compute_accuracy(Network &net, const MNIST &ds, int B) {
   return (total > 0) ? (static_cast<float>(correct) / total) : 0.0f;
 }
 
-int main() {
+int main(int argc, char **argv) {
   MNIST train;
   if (!train.load("../data/mnist/train-images-idx3-ubyte", "../data/mnist/train-labels-idx1-ubyte")) {
     cout << "training load failed\n";
@@ -62,9 +63,16 @@ int main() {
   }
   cout << "Training data loaded.\n";
 
+  bool use_gpu = (argc > 1 && std::string(argv[1]) == "--gpu");
   Network network;
+  if (use_gpu) {
+    network.set_backend(Backend::GPU);
+    cout << "Using GPU Backend\n";
+  } else {
+    cout << "Using CPU Backend\n";
+  }
 
-  int B = 128;
+  int B = 256;
   int N = train.get_num_images();
   int num_batches = N / B;
   int epochs = 7;
@@ -106,6 +114,7 @@ int main() {
          << " accuracy " << (acc)
          << "\n";
   }
+  if (use_gpu) network.sync_from_gpu();
   network.save("../models/model.bin");
   return 0;
 }
