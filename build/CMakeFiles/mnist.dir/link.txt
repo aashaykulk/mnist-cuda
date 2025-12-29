@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmnist.a CMakeFiles/mnist.dir/src/mnist/mnist_loader.cpp.o
-/usr/bin/ranlib libmnist.a
