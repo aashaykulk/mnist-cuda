@@ -20,7 +20,7 @@ struct GpuContext {
   float *d_X, *d_z1, *d_a1, *d_z2, *d_a2, *d_logits;
   uint8_t *d_y;
 
-  float *d_dlogits, *d_dW1, *d_dW2, *d_dW3, *d_db1, *d_db2, *d_db3;
+  float *d_dlogits, *d_dW1, *d_dW2, *d_dW3, *d_db1, *d_db2, *d_db3, *d_dz1, *d_da1, *d_dz2, *d_da2;
 
   cublasHandle_t handle;
   bool handle_created;
@@ -45,7 +45,18 @@ struct GpuContext {
     d_a2 = nullptr;
     d_logits = nullptr;
     d_y = nullptr;
+
     d_dlogits = nullptr;
+    d_dW1 = nullptr;
+    d_dW2 = nullptr;
+    d_dW3 = nullptr;
+    d_db1 = nullptr;
+    d_db2 = nullptr;
+    d_db3 = nullptr;
+    d_dz1 = nullptr;
+    d_da1 = nullptr;
+    d_dz2 = nullptr;
+    d_da2 = nullptr;
 
     handle = NULL;
     handle_created = false;
@@ -75,8 +86,18 @@ void gpu_destroy(GpuContext *ctx) {
   if (ctx->d_a2) {cudaFree(ctx->d_a2); ctx->d_a2 = nullptr;}
   if (ctx->d_logits) {cudaFree(ctx->d_logits); ctx->d_logits = nullptr;}
   if (ctx->d_y) {cudaFree(ctx->d_y); ctx->d_y = nullptr;}
-  if (ctx->d_dlogits) {cudaFree(ctx->d_dlogits); ctx->d_dlogits = nullptr;}
 
+  if (ctx->d_dlogits) {cudaFree(ctx->d_dlogits); ctx->d_dlogits = nullptr;}
+  if (ctx->d_dW1) {cudaFree(ctx->d_dW1); ctx->d_dW1 = nullptr;}
+  if (ctx->d_dW2) {cudaFree(ctx->d_dW2); ctx->d_dW2 = nullptr;}
+  if (ctx->d_dW3) {cudaFree(ctx->d_dW3); ctx->d_dW3 = nullptr;}
+  if (ctx->d_db1) {cudaFree(ctx->d_db1); ctx->d_db1 = nullptr;}
+  if (ctx->d_db2) {cudaFree(ctx->d_db2); ctx->d_db2 = nullptr;}
+  if (ctx->d_db3) {cudaFree(ctx->d_db3); ctx->d_db3 = nullptr;}
+  if (ctx->d_dz1) {cudaFree(ctx->d_dz1); ctx->d_dz1 = nullptr;}
+  if (ctx->d_da1) {cudaFree(ctx->d_da1); ctx->d_da1 = nullptr;}
+  if (ctx->d_dz2) {cudaFree(ctx->d_dz2); ctx->d_dz2 = nullptr;}
+  if (ctx->d_da2) {cudaFree(ctx->d_da2); ctx->d_da2 = nullptr;}
   if (ctx->handle_created) cublasDestroy(ctx->handle);
   ctx -> maxB = 0;
 
@@ -125,7 +146,31 @@ GpuContext *gpu_create(int maxB) {
   err = cudaMalloc(&ctx->d_y, maxB*sizeof(uint8_t));
   if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
 
+  err = cudaMalloc(&ctx->d_dlogits, maxB*out_dim*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_dW1, in_dim*h1*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_dW2, h1*h2*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err= cudaMalloc(&ctx->d_dW3, h2*out_dim*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_db1, h1*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_db2, h2*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_db3, out_dim*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_dz1, maxB*h1*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_da1, maxB*h1*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_dz2, maxB*h2*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+  err = cudaMalloc(&ctx->d_da2, maxB*h2*sizeof(float));
+  if (err != cudaSuccess) {std::cerr << "cudaMalloc failed: " << cudaGetErrorString(err) << std::endl; gpu_destroy(ctx); return nullptr;}
+
   return ctx;
+
 }
 
 bool gpu_upload_params(GpuContext *ctx, const float *W1, const float *W2, const float *W3, 
@@ -254,6 +299,49 @@ void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
 
   gpu_compute_d_dlogits(ctx, B);
 
+  cublasStatus_t stat;
+  const float alpha = 1.0f;
+  const float beta = 0.0f;
+  
+  // layer 3 
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_N, out_dim, h2, B, &alpha, ctx->d_dlogits, out_dim, ctx->d_a2, B, &beta, ctx->d_dW3, out_dim);
+  if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
+  int blockSize = 256;
+  int numBlocks = out_dim;
+  reduce_sum<<<numBlocks, blockSize>>>(ctx->d_dlogits,ctx->d_db3, B, out_dim);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_T, CUBLAS_OP_N, h2, B, out_dim, &alpha, ctx->d_W3, h2, ctx->d_dlogits, out_dim, &beta, ctx->d_da2, h2);
+  if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
+  numBlocks = (B*h2 + blockSize - 1)/blockSize;
+  ReLU_derivative<<<numBlocks, blockSize>>>(ctx->d_dz2, ctx->d_da2, ctx ->d_a2, B, h2);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel ReLU_derivative failed: " << cudaGetErrorString(err) << std::endl; return;}
+  err = cudaDeviceSynchronize();
 
-
+  // layer 2 
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_T, h2, h1, B, &alpha, ctx->d_dz2, h2, ctx->d_a1, B, &beta, ctx->d_dW2, h2);
+  if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
+  int blockSize = 256;
+  int numBlocks = h2;
+  reduce_sum<<<numBlocks, blockSize>>>(ctx->d_dz2,ctx->d_db2, B, h2);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_T, CUBLAS_OP_N, h1, B, h2, &alpha, ctx->d_W2, h1, ctx->d_dz2, h2, &beta, ctx->d_da1, h1);
+  if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
+  numBlocks = (B*h1 + blockSize - 1)/blockSize;
+  ReLU_derivative<<<numBlocks, blockSize>>>(ctx->d_dz1, ctx->d_da1, ctx->d_a1, B, h1);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel ReLU_derivative failed: " << cudaGetErrorString(err) << std::endl; return;}
+  err = cudaDeviceSynchronize();
+  
+  // layer 1 
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_T, h1, in_dim, B, &alpha, ctx->d_dz1, h1, ctx->d_X, in_dim, &beta, ctx->d_dW1, h1);
+  if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
+  int blockSize = 256;
+  int numBlocks = h1;
+  reduce_sum<<<numBlocks, blockSize>>>(ctx->d_dz1,ctx->d_db1, B, h1);
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}
+  err = cudaDeviceSynchronize();
 }
