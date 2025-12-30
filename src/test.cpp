@@ -54,7 +54,7 @@ static float compute_accuracy(Network &net, const MNIST &ds, int B) {
   return (total > 0) ? (static_cast<float>(correct) / total) : 0.0f;
 }
 
-int main(int argc, char **argv) {
+int main() {
   MNIST test;
   if (!test.load("../data/mnist/t10k-images-idx3-ubyte", "../data/mnist/t10k-labels-idx1-ubyte")) {
     cout << "testing load failed\n";
@@ -64,12 +64,14 @@ int main(int argc, char **argv) {
 
   bool use_gpu = (argc > 1 && std::string(argv[1]) == "--gpu");
   Network network;
+  network.load("../models/model.bin");
   if (use_gpu) {
     network.set_backend(Backend::GPU);
     cout << "Using GPU Backend\n";
   } else {
     cout << "Using CPU Backend\n";
   }
+
 
   int B = 256; 
   float acc = compute_accuracy(network, test, B);
