@@ -9,3 +9,7 @@ Tested Models/Model.bin on 256 images from test data on M2 Macbook Air CPU with 
 Trained Models/Model.bin to 97.18% accuracy on NVIDIA RTX 5090 in 1.663 seconds:
 <br>
 ![train.png](./data/pics/train-gpu.png)
+
+Tested Models/Model.bin on 256 images from test data on NVIDIA RTX 5090 with 96.49% accuracy:  
+<br>
+![train.png](./data/pics/test-gpu.png)
