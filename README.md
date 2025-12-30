@@ -34,18 +34,39 @@ Key design choices include:
 
 This design prioritizes clarity and control over maximal performance.
 
-## Results
+## Training Results
 
-The repository includes recorded runs on different hardware configurations:
+### CPU Training (macOS M2)
 
-| Hardware | Task | Dataset Subset | Accuracy | Duration |
-|--------|------|----------------|----------|----------|
-| CPU (macOS M2) | Train | Full training set | 98.21% | 19m 27s |
-| CPU (macOS M2) | Test | 256 images | 97.06% | very fast |
-| GPU (NVIDIA RTX 5090) | Train | Full training set | 97.18% | 1.663s |
-| GPU (NVIDIA RTX 5090) | Test | 256 images | 96.49% | very fast |
+Accuracy: **98.21%**  
+Training time: **19m 27s**
 
-Screenshots of these runs are stored in the `data/pics/` directory.
+![CPU Training Results](data/pics/train.png)
+
+### GPU Training (NVIDIA RTX 5090)
+
+Accuracy: **97.18%**  
+Training time: **1.663s**
+
+![GPU Training Results](data/pics/train-gpu.png)
+
+## Test Results
+
+### CPU Testing (macOS M2)
+
+Accuracy: **97.06%** on 256 images  
+Runtime: very fast
+
+![CPU Test Results](data/pics/test.png)
+
+### GPU Testing (NVIDIA RTX 5090)
+
+Accuracy: **96.49%** on 256 images  
+Runtime: very fast
+
+![GPU Test Results](data/pics/test-gpu.png)
+
+Screenshots were captured directly from training and testing runs and are stored in the `data/pics/` directory.
 
 ## Building
 
@@ -107,9 +128,10 @@ Test runs are intentionally small and complete very quickly, so wall-clock timin
 
 ```
 mnist-cuda/
-├── data/        Dataset files and benchmark screenshots
-├── models/      Saved model parameters
-├── src/         Source code (CPU and CUDA implementations)
+├── data/
+│   └── pics/        Training and testing screenshots
+├── models/          Saved model parameters
+├── src/             Source code (CPU and CUDA implementations)
 ├── CMakeLists.txt
 ├── README.md
 └── TODO.md
@@ -118,4 +140,3 @@ mnist-cuda/
 ## License
 
 This project is released under the MIT License.
-
