@@ -54,7 +54,7 @@ static float compute_accuracy(Network &net, const MNIST &ds, int B) {
   return (total > 0) ? (static_cast<float>(correct) / total) : 0.0f;
 }
 
-int main() {
+int main(int argc, char **argv) {
   MNIST test;
   if (!test.load("../data/mnist/t10k-images-idx3-ubyte", "../data/mnist/t10k-labels-idx1-ubyte")) {
     cout << "testing load failed\n";
