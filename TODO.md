@@ -16,7 +16,7 @@ GPU:
 - [x] Write Host functions
 
 Train:
-- [ ] GPU Train
-- [ ] Cloud GPU
-- [ ] Results
+- [x] Cloud GPU
+- [x] GPU Train
+- [x] Results
 

@@ -62,8 +62,14 @@ int main() {
   }
   cout << "test data loaded.\n";
 
+  bool use_gpu = (argc > 1 && std::string(argv[1]) == "--gpu");
   Network network;
-  network.load("../models/model.bin");
+  if (use_gpu) {
+    network.set_backend(Backend::GPU);
+    cout << "Using GPU Backend\n";
+  } else {
+    cout << "Using CPU Backend\n";
+  }
 
   int B = 256; 
   float acc = compute_accuracy(network, test, B);
