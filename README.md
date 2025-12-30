@@ -1,49 +1,121 @@
 # mnist-cuda
 
-A handwritten-digit classifier for **MNIST** implemented in **C++ with an optional CUDA backend**. The project includes:
-- A minimal MNIST IDX loader (MSB-first / big-endian headers)
-- CPU training + inference
-- GPU training + inference via a CUDA backend
-- Simple CLI binaries for training and testing
+This repository contains an implementation of a neural network trained on the MNIST dataset, written in C++ with optional CUDA GPU acceleration. The goal of the project is to demonstrate how to build and train a neural network from scratch using both CPU and raw CUDA kernels, providing insight into GPU programming and low-level optimization applied to machine learning workloads.
 
-## Results (current checkpoints / runs)
+## Motivation
 
-These results are from the repo’s recorded runs:
+Handwritten digit recognition on the MNIST dataset is a classical task in machine learning, commonly used as a benchmark for neural network training. MNIST consists of 60,000 training images and 10,000 test images of 28x28 grayscale handwritten digits from 0 to 9.
 
-| Backend | Task | Dataset slice | Accuracy | Wall time |
-|---|---:|---:|---:|---:|
-| CPU (M2 MacBook Air) | Train | MNIST train | 98.21% | 19m 27s |
-| CPU (M2 MacBook Air) | Test | 256 test images | 97.06% | ~8.6s |
-| GPU (NVIDIA RTX 5090) | Train | MNIST train | 97.18% | 1.663s |
-| GPU (NVIDIA RTX 5090) | Test | 256 test images | 96.49% | (see screenshot) |
+While modern machine learning workflows often rely on high-level frameworks such as PyTorch or TensorFlow, these frameworks abstract away most of the underlying computation. This project was created to understand what happens beneath those abstractions by implementing the entire training pipeline manually.
 
-Screenshots:
-- CPU train: `data/pics/train.png`
-- CPU test: `data/pics/test.png`
-- GPU train: `data/pics/train-gpu.png`
-- GPU test: `data/pics/test-gpu.png`
+The goals of this project are to:
+- Learn GPU programming fundamentals using raw CUDA kernels
+- Implement forward and backward passes explicitly
+- Control memory allocation, data transfers, and kernel launches
+- Compare CPU and GPU execution on the same neural network
 
-> Notes:
-> - “Test” is currently benchmarked on **256 images** (not the full 10,000-image MNIST test set). :contentReference[oaicite:0]{index=0}  
-> - Timing shown above comes from the captured runs/shell `time` outputs. :contentReference[oaicite:1]{index=1}
+## Technologies Used
 
-## MNIST dataset
+- C++ (core implementation)
+- CUDA (GPU acceleration)
+- CMake (build system)
 
-MNIST contains **60,000 training** and **10,000 test** 28×28 grayscale digit images (10 classes). :contentReference[oaicite:2]{index=2}  
-The original IDX headers are stored **MSB-first (big-endian)**, so loaders must byte-swap on little-endian machines. :contentReference[oaicite:3]{index=3}
+No high-level deep learning libraries (such as cuDNN, PyTorch, or TensorFlow) are used. The CUDA backend is implemented using custom kernels and low-level CUDA APIs to expose the full execution and memory model.
 
-Expected files (either `.gz` or extracted):
-- `train-images-idx3-ubyte(.gz)`
-- `train-labels-idx1-ubyte(.gz)`
-- `t10k-images-idx3-ubyte(.gz)`
-- `t10k-labels-idx1-ubyte(.gz)` :contentReference[oaicite:4]{index=4}
+## Design Overview
 
-## Build
+The model is a simple fully connected neural network trained using gradient descent and backpropagation. Both CPU and GPU implementations share the same high-level structure, allowing direct comparison between execution backends.
 
-### CPU build (macOS / Linux)
+Key design choices include:
+- Explicit handling of MNIST IDX file format (big-endian headers)
+- Manual implementation of softmax, loss computation, and gradient propagation
+- CUDA kernels written for forward pass, backward pass, and gradient accumulation
+- Clear separation between CPU and GPU code paths
+
+This design prioritizes clarity and control over maximal performance.
+
+## Results
+
+The repository includes recorded runs on different hardware configurations:
+
+| Hardware | Task | Dataset Subset | Accuracy | Duration |
+|--------|------|----------------|----------|----------|
+| CPU (macOS M2) | Train | Full training set | 98.21% | 19m 27s |
+| CPU (macOS M2) | Test | 256 images | 97.06% | very fast |
+| GPU (NVIDIA RTX 5090) | Train | Full training set | 97.18% | 1.663s |
+| GPU (NVIDIA RTX 5090) | Test | 256 images | 96.49% | very fast |
+
+Screenshots of these runs are stored in the `data/pics/` directory.
+
+## Building
+
+### Prerequisites
+
+- C++ compiler with C++17 support
+- CMake
+- CUDA Toolkit (optional, for GPU support)
+- NVIDIA GPU (optional)
+
+### Build Instructions
+
+Clone the repository and build:
+
 ```bash
 git clone https://github.com/aashaykulk/mnist-cuda
 cd mnist-cuda
-mkdir -p build && cd build
+mkdir build
+cd build
 cmake ..
-make -j
+make
+```
+
+The build produces two binaries:
+- `train` for training the model
+- `test` for evaluating the model
+
+If CUDA is available, the GPU backend can be enabled at runtime.
+
+## Usage
+
+### Training
+
+CPU:
+```bash
+./train
+```
+
+GPU:
+```bash
+./train --gpu
+```
+
+### Testing
+
+CPU:
+```bash
+./test
+```
+
+GPU:
+```bash
+./test --gpu
+```
+
+Test runs are intentionally small and complete very quickly, so wall-clock timing is not reported for testing.
+
+## Repository Structure
+
+```
+mnist-cuda/
+├── data/        Dataset files and benchmark screenshots
+├── models/      Saved model parameters
+├── src/         Source code (CPU and CUDA implementations)
+├── CMakeLists.txt
+├── README.md
+└── TODO.md
+```
+
+## License
+
+This project is released under the MIT License.
+
