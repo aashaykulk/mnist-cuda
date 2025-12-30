@@ -299,13 +299,11 @@ void gpu_compute_d_dlogits(GpuContext *ctx, int B) {
   cudaError_t err;
   int blockSize = 256;
   int numBlocks = (B*out_dim + blockSize - 1)/blockSize;
-  compute_d_dlogits<<<numBlocks, blockSize>>>(ctx -> d_dlogits, ctx->d_logits, ctx->d_y, int B, int out_dim);
+  compute_d_dlogits<<<numBlocks, blockSize>>>(ctx -> d_dlogits, ctx->d_logits, ctx->d_y, B, out_dim);
   err = cudaGetLastError();
   if (err != cudaSuccess) {std::cerr << "cuda kernel compute_d_dlogits failed: " << cudaGetErrorString(err) << std::endl; return;}
   err = cudaDeviceSynchronize();
   if (err != cudaSuccess) {std::cerr << "cuda device Sync failed: " << cudaGetErrorString(err) << std::endl; return;}
-
-
 
 }
 
@@ -327,14 +325,14 @@ void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
   const float beta = 0.0f;
   
   // layer 3 
-  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_N, out_dim, h2, B, &alpha, ctx->d_dlogits, out_dim, ctx->d_a2, B, &beta, ctx->d_dW3, out_dim);
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_T, out_dim, h2, B, &alpha, ctx->d_dlogits, out_dim, ctx->d_a2, h2, &beta, ctx->d_dW3, out_dim);
   if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
   int blockSize = 256;
   int numBlocks = out_dim;
   reduce_sum<<<numBlocks, blockSize>>>(ctx->d_dlogits,ctx->d_db3, B, out_dim);
   err = cudaGetLastError();
   if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}
-  stat = cublasSgemm(ctx->handle, CUBLAS_OP_T, CUBLAS_OP_N, h2, B, out_dim, &alpha, ctx->d_W3, h2, ctx->d_dlogits, out_dim, &beta, ctx->d_da2, h2);
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_T, CUBLAS_OP_N, h2, B, out_dim, &alpha, ctx->d_W3, out_dim, ctx->d_dlogits, out_dim, &beta, ctx->d_da2, h2);
   if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
   numBlocks = (B*h2 + blockSize - 1)/blockSize;
   ReLU_derivative<<<numBlocks, blockSize>>>(ctx->d_dz2, ctx->d_da2, ctx ->d_a2, B, h2);
@@ -343,14 +341,13 @@ void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
   err = cudaDeviceSynchronize();
 
   // layer 2 
-  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_T, h2, h1, B, &alpha, ctx->d_dz2, h2, ctx->d_a1, B, &beta, ctx->d_dW2, h2);
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_T, h2, h1, B, &alpha, ctx->d_dz2, h2, ctx->d_a1, h1, &beta, ctx->d_dW2, h2);
   if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
-  int blockSize = 256;
-  int numBlocks = h2;
+  numBlocks = h2;
   reduce_sum<<<numBlocks, blockSize>>>(ctx->d_dz2,ctx->d_db2, B, h2);
   err = cudaGetLastError();
   if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}
-  stat = cublasSgemm(ctx->handle, CUBLAS_OP_T, CUBLAS_OP_N, h1, B, h2, &alpha, ctx->d_W2, h1, ctx->d_dz2, h2, &beta, ctx->d_da1, h1);
+  stat = cublasSgemm(ctx->handle, CUBLAS_OP_T, CUBLAS_OP_N, h1, B, h2, &alpha, ctx->d_W2, h2, ctx->d_dz2, h2, &beta, ctx->d_da1, h1);
   if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
   numBlocks = (B*h1 + blockSize - 1)/blockSize;
   ReLU_derivative<<<numBlocks, blockSize>>>(ctx->d_dz1, ctx->d_da1, ctx->d_a1, B, h1);
@@ -361,8 +358,7 @@ void gpu_backward(GpuContext *ctx, const uint8_t *y_host, int B) {
   // layer 1 
   stat = cublasSgemm(ctx->handle, CUBLAS_OP_N, CUBLAS_OP_T, h1, in_dim, B, &alpha, ctx->d_dz1, h1, ctx->d_X, in_dim, &beta, ctx->d_dW1, h1);
   if (stat != CUBLAS_STATUS_SUCCESS) {std::cerr << "cublasSgemm failed: " << stat << std::endl; return;}
-  int blockSize = 256;
-  int numBlocks = h1;
+  numBlocks = h1;
   reduce_sum<<<numBlocks, blockSize>>>(ctx->d_dz1,ctx->d_db1, B, h1);
   err = cudaGetLastError();
   if (err != cudaSuccess) {std::cerr << "cuda kernel reduce_sum failed: " << cudaGetErrorString(err) << std::endl; return;}

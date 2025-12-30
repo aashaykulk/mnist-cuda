@@ -33,10 +33,10 @@ __global__ void compute_d_dlogits(float *d_dlogits, float *d_logits, uint8_t *d_
     if (max_i < d_logits[base + k]) max_i = d_logits[base + k];
   }
   for (int k = 0; k < n; k++) {
-    sum_i += exp(d_logits[base + k] - max_i);
+    sum_i += expf(d_logits[base + k] - max_i);
   }
 
-  p_ij = exp(d_logits[i*n + j] - max_i)/sum_i;
+  p_ij = expf(d_logits[i*n + j] - max_i)/sum_i;
 
   d_dlogits[i*n + j] = p_ij - (j == d_y[i]);
 }
